@@ -18,9 +18,8 @@ from rich.markdown import Markdown
 
 
 class TopologyViz:
-  def __init__(self, chatgpt_api_endpoints: List[str] = [], web_chat_urls: List[str] = []):
-    self.chatgpt_api_endpoints = chatgpt_api_endpoints
-    self.web_chat_urls = web_chat_urls
+  def __init__(self, add_info: list[str] | None = None):
+    self.add_info = add_info or []
     self.topology = Topology()
     self.partitions: List[Partition] = []
     self.node_id = None
@@ -199,12 +198,8 @@ class TopologyViz:
         if 0 <= start_x + j < 100 and i < len(visualization):
           visualization[i][start_x + j] = char
 
-    # Display chatgpt_api_endpoints and web_chat_urls
-    info_lines = []
-    if len(self.web_chat_urls) > 0:
-      info_lines.append(f"Web Chat URL (tinychat): {' '.join(self.web_chat_urls[:1])}")
-    if len(self.chatgpt_api_endpoints) > 0:
-      info_lines.append(f"ChatGPT API endpoint: {' '.join(self.chatgpt_api_endpoints[:1])}")
+    # display additional info
+    info_lines = self.add_info.copy()
 
     info_start_y = len(exo_lines) + 1
     for i, line in enumerate(info_lines):

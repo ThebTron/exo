@@ -9,7 +9,7 @@ from . import node_service_pb2
 from . import node_service_pb2_grpc
 from exo import DEBUG
 from exo.inference.shard import Shard
-from exo.orchestration import Node
+from exo.orchestration import ChatNode
 import json
 
 if platform.system().lower() == "darwin" and platform.machine().lower() == "arm64":
@@ -19,7 +19,7 @@ else:
 
 
 class GRPCServer(node_service_pb2_grpc.NodeServiceServicer):
-  def __init__(self, node: Node, host: str, port: int):
+  def __init__(self, node: ChatNode, host: str, port: int):
     self.node = node
     self.host = host
     self.port = port

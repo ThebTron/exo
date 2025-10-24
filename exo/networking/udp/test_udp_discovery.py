@@ -4,7 +4,7 @@ from unittest import mock
 from exo.networking.udp.udp_discovery import UDPDiscovery
 from exo.networking.grpc.grpc_peer_handle import GRPCPeerHandle
 from exo.networking.grpc.grpc_server import GRPCServer
-from exo.orchestration.node import Node
+from exo.orchestration.node import ChatNode
 
 
 class TestUDPDiscovery(unittest.IsolatedAsyncioTestCase):

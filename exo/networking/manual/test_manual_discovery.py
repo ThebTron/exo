@@ -6,7 +6,7 @@ from exo.networking.manual.manual_discovery import ManualDiscovery
 from exo.networking.manual.network_topology_config import NetworkTopology
 from exo.networking.grpc.grpc_peer_handle import GRPCPeerHandle
 from exo.networking.grpc.grpc_server import GRPCServer
-from exo.orchestration.node import Node
+from exo.orchestration.node import ChatNode
 
 root_path = "./exo/networking/manual/test_data/test_config.json"
 
