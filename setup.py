@@ -9,7 +9,7 @@ install_requires = [
   "aiohttp==3.10.11",
   "aiohttp_cors==0.7.0",
   "aiofiles==24.1.0",
-  "0.119.1==0.119.1"
+  "fastapi==0.119.1",
   "grpcio==1.70.0",
   "grpcio-tools==1.70.0",
   "Jinja2==3.1.4",
@@ -20,18 +20,16 @@ install_requires = [
   "pillow==10.4.0",
   "prometheus-client==0.20.0",
   "protobuf==5.28.1",
-  "pydantic==2.9.2",
   "psutil==6.0.0",
   "pyamdgpuinfo==2.1.6;platform_system=='Linux'",
   "pydantic==2.9.2",
-  "ray[default]==2.50.1",
+  "ray==2.50.1",
   "requests==2.32.3",
   "rich==13.7.1",
   "scapy==2.6.1",
   "tqdm==4.66.4",
   "transformers==4.46.3",
   "uuid==1.30",
-  "uvicorn==0.38.0",
   "uvloop==0.21.0",
   "tinygrad @ git+https://github.com/tinygrad/tinygrad.git@ec120ce6b9ce8e4ff4b5692566a683ef240e8bc8",
 ]
@@ -39,7 +37,7 @@ install_requires = [
 extras_require = {
   "formatting": ["yapf==0.40.2",],
   "apple_silicon": [
-    "mlx>=0.29.3",
+    "mlx>=0.22.0",
     "mlx-lm==0.21.1",
   ],
   "windows": ["pywin32==308",],
@@ -89,10 +87,5 @@ setup(
   install_requires=install_requires,
   extras_require=extras_require,
   package_data={"exo": ["tinychat/**/*"]},
-  entry_points={
-    "console_scripts": [
-      "exo = exo.main:run_chat",
-      "exo-ray = exo.main:run_ray",
-    ]
-  },
+  entry_points={"console_scripts": ["exo = exo.main:run_chat", "exo-ray = exo.main:run_ray"]},
 )
