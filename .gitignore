@@ -22,6 +22,7 @@ __pycache__/
 /eggs/
 /.eggs/
 /lib/
+/exo/lib/
 /lib64/
 /parts/
 /sdist/
