@@ -2,6 +2,7 @@ import numpy as np
 import json
 import asyncio
 import uuid
+import subprocess
 import time
 import traceback
 from typing import List, Dict, Optional, Tuple
@@ -14,10 +15,42 @@ from exo.topology.topology import Topology
 from exo.topology.device_capabilities import UNKNOWN_DEVICE_CAPABILITIES
 from exo.topology.partitioning_strategy import PartitioningStrategy
 from exo.topology.ring_memory_weighted_partitioning_strategy import RingMemoryWeightedPartitioningStrategy
-from exo.helpers import AsyncCallbackSystem
+from exo.helpers import AsyncCallbackSystem, get_local_ip
 from exo.orchestration import Node
 from exo.viz.topology_viz import TopologyViz
 from exo.download.download_progress import RepoProgressEvent
+
+
+async def init_ray_worker(head_node_addr: str):
+    """
+    Ensures a local raylet is running, joins the cluster at `head_node_addr`,
+    and initializes Ray for this Python process.
+    """
+    local_ip = await get_local_ip()
+
+    # start raylet
+    proc = await asyncio.create_subprocess_shell(
+        f"ray stop --force && ray start --address='{head_node_addr}' --node-ip-address={local_ip}",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        raise RuntimeError(stderr.decode() or stdout.decode())
+    else:
+      if DEBUG >= 1:
+        print(f"Local Ray runtime started on {local_ip}, connecting to head {head_node_addr}")
+
+
+async def shutdown_ray_worker():
+    subprocess.run(
+        f"ray stop --force",
+        shell=True,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
 
 class RayComputeNode(Node):
@@ -100,11 +133,11 @@ class RayComputeNode(Node):
           self.current_topology.active_node_id = active_node_id = status_data.get("node_id")
           if active_node_id != self.id:
             head_node_addr = status_data.get("head_node_address")
-            ray.init(
-              address=head_node_addr, 
-              include_dashboard=False, 
-              log_to_driver=False,
+
+            asyncio.create_task(
+              init_ray_worker(head_node_addr)
             )
+
             if DEBUG >= 1: print(f"[Node '{self.id}'] joined cluster: '{active_node_id}'")
         elif status_data.get("status", "").startswith("end_"):
           active_node_id = status_data.get("node_id")
@@ -113,7 +146,9 @@ class RayComputeNode(Node):
 
           if active_node_id != self.id:
             head_node_addr = status_data.get("head_node_address")
-            ray.shutdown()
+            asyncio.create_task(
+              shutdown_ray_worker()
+            )
             if DEBUG >= 1: print(f"[Node '{self.id}'] shut down ray cluster of head node: '{active_node_id}'")
     except Exception as e:
       if DEBUG >= 1: print(f"Error on_node_status: {e}")

@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import time
 import uuid
 
 import asyncio
@@ -9,7 +11,7 @@ import ray
 import uvicorn
 
 from exo import DEBUG
-from exo.helpers import print_yellow_exo
+from exo.helpers import print_yellow_exo, get_local_ip
 from exo.orchestration import RayComputeNode
 from exo.runner import ExoRunner
 from exo.viz.topology_viz import TopologyViz
@@ -17,13 +19,40 @@ from exo.viz.topology_viz import TopologyViz
 os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"
 
 
-async def _start_ray_peers(node: RayComputeNode, response_timeout: int):
-    # launch head node
-    info = ray.init(
-        address=None, 
-        include_dashboard=True, 
-        log_to_driver=False,
+async def start_head_and_connect(port=6379, dashboard_port=8265):
+    head_ip = await get_local_ip()
+    # start a cluster head
+    cmd = f"ray stop --force && ray start --head --node-ip-address={head_ip} --port={port} --dashboard-port={dashboard_port}"
+    
+    proc = await asyncio.create_subprocess_shell(
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
+
+    stdout, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+        print(f"Ray head failed to start:\n{stderr.decode() or stdout.decode()}")
+        return None
+    else:
+        if DEBUG >= 1:
+            print(f"Ray head started on {head_ip}:{port}")
+    
+    loop = asyncio.get_running_loop()
+    ray_info = await loop.run_in_executor(
+        None,
+        lambda: ray.init(address=f"{head_ip}:{port}", log_to_driver=False)
+    )
+
+    if DEBUG >=1:
+        print(f"Connected to Ray cluster at {ray_info.address_info}")
+
+    return ray_info
+
+async def _start_ray_peers(node: RayComputeNode, response_timeout: int):
+    info = await start_head_and_connect()
+    print("Ray head started at:", info["redis_address"])
     request_id = str(uuid.uuid4())
 
     # launch peer nodes
@@ -91,22 +120,16 @@ class ExoRayComputeRunner(ExoRunner):
         @app.post("/start_ray")
         async def start_ray():
             try:
-                if not ray.is_initialized():
-                    info = await _start_ray_peers(
-                        node=self._node,
-                        response_timeout=self.response_timeout,
-                    )
-                    return {
-                        "status": "success",
-                        "message": {
-                            "head_node_address": info["address"],
-                        }
+                info = await _start_ray_peers(
+                    node=self._node,
+                    response_timeout=self.response_timeout,
+                )
+                return {
+                    "status": "success",
+                    "message": {
+                        "head_node_address": info["address"],
                     }
-                else:
-                    return {
-                        "status": "failure",
-                        "message": "ray server is already up and running",
-                    }
+                }
             except Exception as e:
                 return {
                     "status": "failure",
@@ -116,21 +139,15 @@ class ExoRayComputeRunner(ExoRunner):
         @app.post("/stop_ray")
         async def stop_ray():
             try:
-                if ray.is_initialized():
-                    info = await _stop_ray_peers(
-                        node=self._node,
-                        response_timeout=self.response_timeout,
-                    )
-                    
-                    return {
-                        "status": "success",
-                        "message": "ray server stopped"
-                    }
-                else:
-                    return {
-                        "status": "failure",
-                        "message": "no ray server running to shutdown",
-                    }
+                info = await _stop_ray_peers(
+                    node=self._node,
+                    response_timeout=self.response_timeout,
+                )
+                
+                return {
+                    "status": "success",
+                    "message": "ray server stopped"
+                }
             except Exception as e:
                 return {
                     "status": "failure",

@@ -8,6 +8,7 @@ import platform
 import psutil
 import uuid
 from scapy.all import get_if_addr, get_if_list
+import socket
 import re
 import subprocess
 from pathlib import Path
@@ -370,3 +371,13 @@ def get_exo_images_dir() -> Path:
   images_dir = exo_home/"Images"
   if not images_dir.exists(): images_dir.mkdir(exist_ok=True)
   return images_dir
+
+
+async def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
