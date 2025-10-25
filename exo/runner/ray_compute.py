@@ -91,17 +91,7 @@ class ExoRayComputeRunner(ExoRunner):
     response_timeout: int = 90
     api_port: int = Field(52415, description="Port for job submission server.")
 
-    def model_post_init(self, __context):
-        print_yellow_exo()
-
-        self.setup_node_meta()
-
-        self.setup_discovery()
-
-        self.setup_api()
-
-        host, port = self._api.config.host, self._api.config.port
-
+    def setup_node(self):
         self._topology_viz = (
             TopologyViz(
                 add_info=["'Running ExoRayComputeRunner'"]
@@ -109,8 +99,14 @@ class ExoRayComputeRunner(ExoRunner):
             if not self.disable_tui else None
         )
 
-        self.setup_node()
-
+        self._node = RayComputeNode(
+            self.node_id,
+            None,
+            self._discovery,
+            topology_viz=self._topology_viz,
+        )
+        self.setup_server(node=self._node)
+        self._node.server = self._server
 
     def setup_api(self):
         app = FastAPI()
@@ -162,17 +158,6 @@ class ExoRayComputeRunner(ExoRunner):
             access_log=False,
         )
         self._api = uvicorn.Server(config)
-
-    def setup_node(self):
-        self._node = RayComputeNode(
-            self.node_id,
-            None,
-            self._discovery,
-            topology_viz=self._topology_viz,
-        )
-        self.setup_server(node=self._node)
-        self._node.server = self._server
-
 
     async def run(self):
         await self._api.serve()

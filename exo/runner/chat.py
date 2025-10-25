@@ -63,13 +63,8 @@ class ExoChatRunner(ExoRunner):
     prompt: str = Field("Who are you?", description="Prompt for model when using --run-model.")
     default_temp: float = Field(0.0, description="Default token sampling temperature.")
 
-    def model_post_init(self, __context):
-        print_yellow_exo()
-
-        self.setup_node_meta()
-
-        self.setup_discovery()
-
+    def setup_node(self):
+        # setup inference engine
         print(f"Selected inference engine: {self.inference_engine}")
 
         system_info = get_system_info()
@@ -83,7 +78,7 @@ class ExoChatRunner(ExoRunner):
         self._inference_engine = get_inference_engine(inference_engine_name, self._shard_downloader)
         print(f"Using inference engine: {self._inference_engine.__class__.__name__} with shard downloader: {self._shard_downloader.__class__.__name__}")
 
-        # setup chat
+        # setup viz
         chatgpt_api_endpoints = [f"http://{ip}:{self.chatgpt_api_port}/v1/chat/completions" for ip, _ in get_all_ip_addresses_and_interfaces()]
         web_chat_urls = [f"http://{ip}:{self.chatgpt_api_port}" for ip, _ in get_all_ip_addresses_and_interfaces()]
         if DEBUG >= 0:
@@ -105,9 +100,20 @@ class ExoChatRunner(ExoRunner):
             if not self.disable_tui else None
         )
 
-        self.setup_node()
-
-        self.setup_api()
+        # setup node
+        self._node = ChatNode(
+            self.node_id,
+            None,
+            self._inference_engine,
+            self._discovery,
+            self._shard_downloader,
+            partitioning_strategy=RingMemoryWeightedPartitioningStrategy(),
+            max_generate_tokens=self.max_generate_tokens,
+            topology_viz=self._topology_viz,
+            default_sample_temperature=self.default_temp
+        )
+        self.setup_server(node=self._node)
+        self._node.server = self._server
 
         # setup topology visualization updates
         self._buffered_token_output = {}
@@ -164,21 +170,6 @@ class ExoChatRunner(ExoRunner):
             self._last_events[shard.model_id] = (current_time, event)
             asyncio.create_task(self._node.broadcast_opaque_status("", json.dumps({"type": "download_progress", "node_id": self._node.id, "progress": event.to_dict()})))
         self._shard_downloader.on_progress.register("broadcast").on_next(throttled_broadcast)
-
-    def setup_node(self):
-        self._node = ChatNode(
-            self.node_id,
-            None,
-            self._inference_engine,
-            self._discovery,
-            self._shard_downloader,
-            partitioning_strategy=RingMemoryWeightedPartitioningStrategy(),
-            max_generate_tokens=self.max_generate_tokens,
-            topology_viz=self._topology_viz,
-            default_sample_temperature=self.default_temp
-        )
-        self.setup_server(node=self._node)
-        self._node.server = self._server
 
     def setup_api(self):
         self._api = ChatGPTAPI(
