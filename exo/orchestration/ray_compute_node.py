@@ -43,6 +43,9 @@ async def init_ray_worker(head_node_addr: str):
 
 
 async def shutdown_ray_worker():
+    if ray.is_initialized():
+      ray.shutdown()
+      
     proc = await asyncio.create_subprocess_shell(
         f"ray stop --force",
         stdout=subprocess.PIPE,

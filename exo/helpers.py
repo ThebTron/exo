@@ -10,6 +10,7 @@ import uuid
 from scapy.all import get_if_addr, get_if_list
 import socket
 import re
+import requests
 import subprocess
 from pathlib import Path
 import tempfile
@@ -381,3 +382,17 @@ async def get_local_ip():
     finally:
         s.close()
     return ip
+
+
+def ensure_endpoint_alive(port: int):
+    url = f"http://localhost:{port}/health"  # or use /docs or / for a simple check
+    try:
+        response = requests.get(url, timeout=2)
+        response.raise_for_status()
+        return True
+    except requests.ConnectionError:
+        raise RuntimeError(f"API not reachable at {url}. Is the server running?")
+    except requests.Timeout:
+        raise RuntimeError(f"Timeout when checking API at {url}.")
+    except requests.HTTPError as e:
+        raise RuntimeError(f"Health check failed: {e.response.status_code}")

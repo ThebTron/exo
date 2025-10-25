@@ -88,5 +88,5 @@ setup(
   install_requires=install_requires,
   extras_require=extras_require,
   package_data={"exo": ["tinychat/**/*"]},
-  entry_points={"console_scripts": ["exo = exo.main:run_chat", "exo-ray = exo.main:run_ray"]},
+  entry_points={"console_scripts": ["exo = exo.main:run_chat", "exo-ray = exo.main:run_ray", "submit-job = exo.main:submit_ray_job"]},
 )

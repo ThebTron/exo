@@ -20,6 +20,9 @@ os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"
 
 
 async def start_head_and_connect(port=6379, dashboard_port=8265):
+    if ray.is_initialized():
+      ray.shutdown()
+
     head_ip = await get_local_ip()
     # start a cluster head
     cmd = f"ray stop --force && ray start --head --node-ip-address={head_ip} --port={port} --dashboard-port={dashboard_port}"
@@ -68,7 +71,7 @@ async def _start_ray_peers(node: RayComputeNode, response_timeout: int):
         timeout=response_timeout
     )
     if DEBUG >= 1:
-        print(f"[Node '{node.id}'] head of cluster: '{info['address']}'")
+        print(f"[Node '{node.id}'] head of ray cluster: '{info['address']}'")
     return info
 
 
@@ -84,7 +87,7 @@ async def _stop_ray_peers(node: RayComputeNode, response_timeout: int):
     )
     ray.shutdown()
     if DEBUG >= 1:
-        print(f"[Node '{node.id}'] stop cluster'")
+        print(f"[Node '{node.id}'] stop ray cluster")
 
 
 class ExoRayComputeRunner(ExoRunner):
@@ -110,6 +113,10 @@ class ExoRayComputeRunner(ExoRunner):
 
     def setup_api(self):
         app = FastAPI()
+
+        @app.get("/health")
+        async def health():
+            return {"status": "ok"}
 
         @app.post("/start_ray")
         async def start_ray():
