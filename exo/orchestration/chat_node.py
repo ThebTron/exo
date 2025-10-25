@@ -6,12 +6,12 @@ import time
 import traceback
 from typing import List, Dict, Optional, Tuple
 
+from exo import DEBUG
 from exo.networking import Discovery, PeerHandle, Server
 from exo.inference.inference_engine import InferenceEngine, Shard
 from exo.topology.topology import Topology
-from exo.topology.device_capabilities import device_capabilities, UNKNOWN_DEVICE_CAPABILITIES
-from exo.topology.partitioning_strategy import Partition, PartitioningStrategy, map_partitions_to_shards
-from exo import DEBUG
+from exo.topology.device_capabilities import UNKNOWN_DEVICE_CAPABILITIES
+from exo.topology.partitioning_strategy import PartitioningStrategy, map_partitions_to_shards
 from exo.helpers import AsyncCallbackSystem
 from exo.orchestration import Node
 from exo.viz.topology_viz import TopologyViz

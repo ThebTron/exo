@@ -10,13 +10,13 @@ import tqdm
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Union, get_args, get_origin
 
+from exo.download.new_shard_download import has_exo_home_read_access, has_exo_home_write_access, ensure_exo_home, seed_models
+from exo.helpers import find_available_port, DEBUG, get_or_create_node_id, shutdown
 from exo.networking.manual.manual_discovery import ManualDiscovery
 from exo.networking.udp.udp_discovery import UDPDiscovery
 from exo.networking.tailscale.tailscale_discovery import TailscaleDiscovery
 from exo.networking.grpc.grpc_peer_handle import GRPCPeerHandle
 from exo.networking.grpc.grpc_server import GRPCServer
-from exo.download.new_shard_download import has_exo_home_read_access, has_exo_home_write_access, ensure_exo_home, seed_models
-from exo.helpers import find_available_port, DEBUG, get_or_create_node_id, shutdown
 
 
 class ExoRunner(BaseModel):

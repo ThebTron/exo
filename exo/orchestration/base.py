@@ -1,22 +1,19 @@
 import numpy as np
 import json
 import asyncio
-import uuid
-import time
 import traceback
-from typing import List, Dict, Optional, Tuple, Union, Set
+from typing import List, Dict, Optional, Tuple
+
 from exo.networking import Discovery, PeerHandle, Server
-from exo.inference.inference_engine import InferenceEngine, Shard
 from exo.topology.topology import Topology
 from exo.topology.device_capabilities import device_capabilities, UNKNOWN_DEVICE_CAPABILITIES
-from exo.topology.partitioning_strategy import Partition, PartitioningStrategy, map_partitions_to_shards
+from exo.topology.partitioning_strategy import PartitioningStrategy
 from exo.topology.ring_memory_weighted_partitioning_strategy import RingMemoryWeightedPartitioningStrategy
 from exo import DEBUG
 from exo.helpers import AsyncCallbackSystem
 from exo.viz.topology_viz import TopologyViz
 from exo.download.download_progress import RepoProgressEvent
-from exo.inference.inference_engine import get_inference_engine, InferenceEngine
-from exo.download.shard_download import ShardDownloader
+
 
 class Node:
   def __init__(

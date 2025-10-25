@@ -88,8 +88,6 @@ async def _stop_ray_peers(node: RayComputeNode, response_timeout: int):
 
 
 class ExoRayComputeRunner(ExoRunner):
-    """TODO"""
-
     response_timeout: int = 90
     api_port: int = Field(52415, description="Port for job submission server.")
 

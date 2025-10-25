@@ -13,7 +13,6 @@ from exo import DEBUG
 from exo.networking import Discovery, PeerHandle, Server
 from exo.topology.topology import Topology
 from exo.topology.device_capabilities import UNKNOWN_DEVICE_CAPABILITIES
-from exo.topology.partitioning_strategy import PartitioningStrategy
 from exo.topology.ring_memory_weighted_partitioning_strategy import RingMemoryWeightedPartitioningStrategy
 from exo.helpers import AsyncCallbackSystem, get_local_ip
 from exo.orchestration import Node
@@ -44,13 +43,18 @@ async def init_ray_worker(head_node_addr: str):
 
 
 async def shutdown_ray_worker():
-    subprocess.run(
+    proc = await asyncio.create_subprocess_shell(
         f"ray stop --force",
-        shell=True,
-        check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        raise RuntimeError(stderr.decode() or stdout.decode())
+    else:
+      if DEBUG >= 1:
+        print(f"Local Ray runtime closed")
 
 
 class RayComputeNode(Node):
@@ -59,13 +63,13 @@ class RayComputeNode(Node):
     _id: str,
     server: Server,
     discovery: Discovery,
-    partitioning_strategy: PartitioningStrategy = None,
     topology_viz: Optional[TopologyViz] = None,
   ):
     self.id = _id
     self.server = server
     self.discovery = discovery
-    self.partitioning_strategy = partitioning_strategy or RingMemoryWeightedPartitioningStrategy()
+    # TODO: refactor topology_viz to make partitioning optional
+    self.partitioning_strategy = RingMemoryWeightedPartitioningStrategy()
     self.peers: List[PeerHandle] = {}
     self.topology: Topology = Topology()
     self.device_capabilities = UNKNOWN_DEVICE_CAPABILITIES
@@ -81,7 +85,6 @@ class RayComputeNode(Node):
     self.node_download_progress: Dict[str, RepoProgressEvent] = {}
     self.topology_inference_engines_pool: List[List[str]] = []
     self.outstanding_requests = {}
-
 
   async def start_ray_peers(
       self,

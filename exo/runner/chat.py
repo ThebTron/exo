@@ -26,8 +26,6 @@ from exo.viz.topology_viz import TopologyViz
 
 
 class ExoChatRunner(ExoRunner):
-    """Unified configuration for Exo node / discovery / inference / training modes."""
-
     # Core command
     command: Optional[Literal["run", "eval", "train"]] = Field(
         None, description="Main command to execute."
