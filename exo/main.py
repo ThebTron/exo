@@ -22,6 +22,7 @@ from exo.runner.ray_compute import submit_ray_job
 os.environ["GRPC_VERBOSITY"] = "error"
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
+os.environ["RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER"] = "1"
 
 # Configure uvloop for maximum performance
 def configure_uvloop():
