@@ -92,8 +92,11 @@ class ExoRunner(BaseModel):
         data = {}
         if args.config:
             data = json.load(open(args.config))
+
         # CLI args override config
         for k, v in vars(args).items():
+            if k in data:
+                continue
             if v is not None and k != "config":
                 data[k] = v
         return cls.model_validate(data)
