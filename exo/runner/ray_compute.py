@@ -49,7 +49,7 @@ async def start_head_and_connect(port=6379, dashboard_port=8265):
     loop = asyncio.get_running_loop()
     ray_info = await loop.run_in_executor(
         None,
-        lambda: ray.init(address=f"{head_ip}:{port}", log_to_driver=False)
+        lambda: ray.init(address=f"{head_ip}:{port}", log_to_driver=False, logging_level="ERROR")
     )
 
     if DEBUG >=1:
