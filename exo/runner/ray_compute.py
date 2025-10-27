@@ -59,7 +59,6 @@ async def start_head_and_connect(port=6379, dashboard_port=8265):
 
 async def _start_ray_peers(node: RayComputeNode, response_timeout: int):
     info = await start_head_and_connect()
-    print("Ray head started at:", info["redis_address"])
     request_id = str(uuid.uuid4())
 
     # launch peer nodes
